@@ -1,0 +1,35 @@
+
+load (7,1);
+load (8,2);
+load (23,17);
+load (24,18);
+
+[READY_LIST+0]=0;
+
+load(25,21);
+load(26,22);
+load(27,23);
+
+PTBR=1024;
+PTLR=4;
+
+[PTBR+0]=25;
+[PTBR+1]="01";
+[PTBR+2]=26;
+[PTBR+3]="01";
+[PTBR+4]=27;
+[PTBR+5]="01";
+[PTBR+6]=28;
+[PTBR+7]="01";
+
+[READY_LIST+1]=2;
+SP=3*512;
+
+[28*512]=0;
+
+load (11,5);
+load (12,6);
+load(9,3);
+load(10,4);
+ireturn ;
+
