@@ -1,0 +1,14 @@
+
+alias c S0;
+alias n S1;
+
+print "Enter the n:";
+read n;
+
+c=0;
+while (c<=n) do
+   if (c%2==1) then
+     print c;
+   endif;
+   c=c+1;
+endwhile;
