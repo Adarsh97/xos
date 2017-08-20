@@ -1,0 +1,21 @@
+alias n S0;
+alias k S1;
+alias i S2;
+
+print "Enter the number for checking prime :";
+read n;
+
+i=2;
+k=0;
+while (i*i <= n) do
+  if (n%i==0) then
+     k=1;
+     break;
+     endif; 
+i=i+1;
+endwhile;
+
+if (k==1) then print " is not a prime number"; 
+else print "prime";
+endif;
+
