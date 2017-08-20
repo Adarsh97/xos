@@ -1,0 +1,29 @@
+
+alias n S0;
+alias i S1;
+alias j S2;
+alias d S3;
+
+print "Enter the number :";
+read n;
+
+i=2;
+while (i <= n) do
+
+j=2;
+d=0;
+while(j*j <=i) do
+if(i%j==0) then
+d=1;
+break;
+endif;
+j=j+1;
+endwhile;
+
+if ((d==0)&&(n%i==0)) then 
+print i;
+endif;
+
+i=i+1;
+endwhile;
+
