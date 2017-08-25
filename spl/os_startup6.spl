@@ -1,0 +1,78 @@
+load (7,1);
+load (8,2);
+load (23,17);
+load (24,18);
+
+[READY_LIST+0]=0;
+
+load(25,21);
+load(26,22);
+load(27,23);
+
+PTBR=1024;
+PTLR=4;
+
+[PTBR+0]=25;
+[PTBR+1]="01";
+[PTBR+2]=26;
+[PTBR+3]="01";
+[PTBR+4]=27;
+[PTBR+5]="01";
+[PTBR+6]=28;
+[PTBR+7]="01";
+
+[READY_LIST+1]=2;
+SP=3*512;
+
+[28*512]=0;
+
+[READY_LIST+32]=1;
+load(29,27);
+alias PTBR_Process1 S0;
+PTBR_Process1 = 1024+1*8;
+[PTBR_Process1+0]=29;
+
+[PTBR_Process1+1]="01";
+
+[PTBR_Process1+2]=-1;
+[PTBR_Process1+3]="00";
+[PTBR_Process1+4]=-1;
+[PTBR_Process1+5]="00";
+[PTBR_Process1+6]=30;
+[PTBR_Process1+7]="01";
+[READY_LIST+33]=1;
+[READY_LIST+34]=3*512;
+[READY_LIST+35]=3*512;
+[READY_LIST+36]=0;
+[READY_LIST+37]=PTBR_Process1;
+[READY_LIST+38]=4;
+
+
+[READY_LIST+64]=2;
+load(31,29);
+alias PTBR_Process2 S1;
+PTBR_Process2 = 1024+2*8;
+[PTBR_Process2+0]=31;
+
+[PTBR_Process2+1]="01";
+
+[PTBR_Process2+2]=-1;
+[PTBR_Process2+3]="00";
+[PTBR_Process2+4]=-1;
+[PTBR_Process2+5]="00";
+[PTBR_Process2+6]=32;
+[PTBR_Process2+7]="01";
+[READY_LIST+33]=1;
+[READY_LIST+34]=3*512;
+[READY_LIST+35]=3*512;
+[READY_LIST+36]=0;
+[READY_LIST+37]=PTBR_Process2;
+[READY_LIST+38]=4;
+
+
+load (11,5);
+load (12,6);
+load (9,3);
+load (10,4);
+
+ireturn ;
