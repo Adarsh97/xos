@@ -1,0 +1,75 @@
+
+alias physical S0;
+physical =([PTBR+2*(SP/512)]*512)+(SP%512);
+alias sysCallNo S1;
+sysCallNo =[physical-1];
+alias argument S2;
+argument =[physical-3];
+
+if (sysCallNo==1) then
+alias index S3;
+index=0;
+
+while (index<64) do
+   if([FAT+index*8]==argument) then
+   [physical-2]=0;
+   ireturn ;
+   endif;
+  index=index+1;
+endwhile;
+
+index =24;
+
+while (index <448) do
+   if([FAT+512+index]==0) then
+    break;
+   endif;
+index=index+1;
+endwhile;
+
+if (index==448) then 
+  [physical-2]=-1;
+  ireturn ;
+ endif;
+
+alias fatindex S5;
+fatindex=0;
+
+while (fatindex<64) do
+   if([FAT+fatindex*8+2]==-1) then
+    break;
+   endif;
+fatindex=fatindex+1;
+endwhile;
+
+if (fatindex==64) then
+  [physical-2]=-1;
+  ireturn;
+endif;
+
+[FAT+fatindex*8]=argument;
+[FAT+fatindex*8+1]=0;
+[FAT+fatindex*8+2]=index;
+
+load (1,index);
+alias counter S6;
+
+counter=0;
+while (counter <256) do
+  [SCRATCHPAD+counter]=-1;
+ counter=counter+1;
+endwhile;
+
+store(1,index);
+
+[FAT+512+index]=1;
+
+store(5,19);
+store(6,20);
+
+[physical-2]=0;
+ireturn ;
+
+endif;
+
+
