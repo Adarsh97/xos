@@ -1,0 +1,41 @@
+
+load (7,1);  // ex_handler loading
+load (8,2);
+load (23,17);  // interrupt 7 loading
+load (24,18);
+
+[READY_LIST+0]=0;  // pid of init =0
+
+load(25,21);   // loading init
+load(26,22);
+load(27,23);
+
+PTBR=1024;   // page table base register
+PTLR=4;      // page table length register
+
+[PTBR+0]=25;  // page table entry setting
+[PTBR+1]="01";
+[PTBR+2]=26;
+[PTBR+3]="01";
+[PTBR+4]=27;
+[PTBR+5]="01";
+[PTBR+6]=28;
+[PTBR+7]="01";
+
+[READY_LIST+1]=2;  // init is running
+SP=3*512;         // 4th page containing stack
+
+[28*512]=0;   // top of the stack containin     
+           //  address of (logical) init
+
+
+load (5,19);   // FAT entry loading
+load (6,20);    // Disk Free List loading
+load (11,5);   // interrupt 1 loading
+load (12,6);
+load(9,3);     // loading timer interrupt
+load(10,4);
+
+
+
+ireturn ;
