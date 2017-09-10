@@ -1,0 +1,138 @@
+//taking physical value of SP
+
+alias physical S0;
+physical=[PTBR+2*(SP/512)]*512+(SP%512);
+
+//taking argument
+alias argument S1;
+argument=[physical-3];
+
+//obtaining system call number
+alias sysnumber S2;
+sysnumber=[physical-1];
+alias fatindex S3;
+fatindex=0;
+
+
+// open system call
+
+if (sysnumber==2) then
+
+// checking wthr fat entry with name exist or not
+ while (fatindex<64) do
+   if ([FAT+fatindex*8+0]==argument) then
+    break;
+   endif;
+   fatindex=fatindex+1;
+ endwhile;
+
+ if (fatindex==64) then
+   [physical-2]=-1;
+   ireturn ;
+ endif;
+ 
+ // searching for fatindex in soft(system-wide open file table)
+ alias sysindex S4;
+ sysindex=0;
+ 
+ while (sysindex<64) do
+  if ([FILE_TABLE+sysindex*2+0]==fatindex) then
+    break;
+  endif;
+  sysindex=sysindex+1;
+ endwhile;
+ 
+
+// if not found try to find a free entry
+
+ if (sysindex==64) then
+   sysindex=0;
+   while (sysindex<64) do
+     if([FILE_TABLE+sysindex*2+0]==-1) then
+       break;
+     endif;
+     sysindex=sysindex+1;
+   endwhile;
+ endif;
+
+ if (sysindex==64) then
+   [physical-2]=-1;
+   ireturn ;
+ endif;
+
+// checking for a free enrty in per-process open file table
+
+ alias pid S6;
+ pid=(PTBR-1024)/8;
+ 
+ alias ppindex S7;
+ ppindex=0;
+ 
+ while (ppindex<8) do
+  if([READY_LIST+pid*32+ppindex*2+0+15]==-1) then
+    break;
+  endif;
+  ppindex=ppindex+1;
+ endwhile;
+
+ if(ppindex==8) then
+   [physical-2]=-1;
+   ireturn ;
+  endif;
+
+ [READY_LIST+pid*32+ppindex*2+0+15]=sysindex;
+ [READY_LIST+pid*32+ppindex*2+1+15]=0;
+ 
+ [FILE_TABLE+sysindex*2+0]=fatindex;
+ [FILE_TABLE+sysindex*2+1]=[FILE_TABLE+sysindex*2+1]+1;
+ 
+ [physical-2]=ppindex;
+ ireturn ;
+endif;
+
+// system call for close
+ 
+if (sysnumber==3) then
+  
+// checking wthr filedescriptor exist or not 
+
+ if(argument<0 || argument >7) then 
+  [physical-2]=-1;
+  ireturn;
+ endif;
+
+// checking whtr corresponding entry is there or not
+
+ alias currentpid S9;
+ currentpid=(PTBR-1024)/8;
+ 
+ if([READY_LIST+15+currentpid*32+argument*2+0]==-1) then
+  [physical-2]=-1;
+  ireturn;
+ endif;
+
+ alias sysindex S10;
+ sysindex=[READY_LIST+15+currentpid*32+argument*2+0];
+
+//decrementing file open count
+ 
+ [FILE_TABLE+sysindex*2+1]=[FILE_TABLE+sysindex*2+1]-1;
+
+//invalidating if count =0
+ 
+ if([FILE_TABLE+sysindex*2+1]<=0) then
+   [FILE_TABLE+sysindex*2+0]=-1;
+ endif;
+ 
+// invalidating per-process open file table.
+
+ [READY_LIST+15+currentpid*32+argument*2+0]=-1;
+ [READY_LIST+15+currentpid*32+argument*2+1]=-1;
+
+ [physical-2]=0;
+ ireturn ;
+
+endif;
+
+   
+  
