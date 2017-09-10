@@ -1,12 +1,14 @@
 decl
  integer status;
+integer f;
 enddecl
 
 
 integer main()
 {
 
-status =Create("myfile.dat");
+status =Create("adarshe.dat");
 print(status);
+
 return 0;
 }
