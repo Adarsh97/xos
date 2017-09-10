@@ -1,0 +1,80 @@
+alias physical S0;
+
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+
+alias sysnumber S1;
+sysnumber=[physical-1];
+
+alias fdescriptor S2;
+fdescriptor =[physical-4];
+
+alias wordtowrite S3;
+wordtowrite =[physical-3];
+
+
+if(sysnumber==5) then
+ 
+  if(fdescriptor<0 || fdescriptor >7) then
+   [physical-2]=-1;
+   ireturn ;
+  endif;
+
+  alias pid S4;
+  pid=(PTBR-1024)/8;
+  
+ if([READY_LIST+pid*32+15+fdescriptor*2+0]==-1) then
+ [physical-2]=-1;
+ ireturn;
+ endif;
+
+ alias lseek S5;
+ lseek=[READY_LIST+pid*32+15+fdescriptor*2+1];
+ 
+ alias sysindex S6;
+ sysindex=[READY_LIST+pid*32+15+fdescriptor*2+0];
+ 
+ alias fatindex S7;
+ fatindex=[FILE_TABLE+sysindex*2+0];
+ 
+ alias bbnumber S8;
+ bbnumber=[FAT+fatindex*8+2];
+
+ alias counter S9;
+ counter=24;
+ 
+ load(1,bbnumber);
+ if([SCRATCHPAD+(lseek/512)]==-1) then
+   while(counter<448) do
+     if([DISK_LIST+counter]==0) then
+      break;
+     endif;
+   counter=counter+1;
+   endwhile;
+  
+  if(counter==448) then
+    [physical-2]=-1;
+    ireturn;
+   endif;
+ 
+ 
+ [DISK_LIST+counter]=1;
+ [SCRATCHPAD+(lseek/512)]=counter;
+ [FAT+fatindex*8+1]=[FAT+fatindex*8+1]+512;
+ store(1,bbnumber);
+ store(5,19);
+ store(6,20);
+ endif;
+ alias blocktowrite S11;
+ blocktowrite=[SCRATCHPAD+(lseek/512)];
+ load(1,blocktowrite);
+ [SCRATCHPAD+(lseek%512)]=wordtowrite;
+  
+ store(1,blocktowrite);
+ 
+ [READY_LIST+pid*32+15+fdescriptor*2+1]=[READY_LIST+pid*32+15+fdescriptor*2+1]+1;
+ 
+ [physical-2]=0;
+ ireturn;
+
+endif;
+ 
