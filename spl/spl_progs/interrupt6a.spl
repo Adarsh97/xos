@@ -109,7 +109,7 @@ else
 if(countery == (codeblock-codepage)) then
 break;
 endif;
-countery=countery+1;
+// countery=countery+1;
 [MEM_LIST+counter]=1;
 [PAGE_TABLE+current*8+codepage*2]=counter;
 [PAGE_TABLE+current*8+codepage*2+1]="01";
