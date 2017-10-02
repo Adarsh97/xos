@@ -1,0 +1,126 @@
+alias cause S0;
+alias vpagenum S1;
+alias ip_addr S2;
+alias exception S3;
+
+cause=EFR%10;
+vpagenum=(EFR/10)%100;
+ip_addr=(EFR/1000);
+
+if(cause==1) then
+print "illegal instr";
+exception="exception";
+inline "JMP 11776";
+endif;
+
+if(cause==2) then
+print "illegal mem access";
+exception="exception";
+inline "JMP 11776";
+endif;
+
+if(cause==3) then
+print "arth exception";
+exception="exception";
+inline "JMP 11776";
+endif;
+
+if(cause==4) then
+print "illegal oprnds";
+exception="exception";
+inline "JMP 11776";
+endif;
+
+if(cause==0) then
+alias current S4;
+alias victimpage S5;
+alias counter S6;
+
+current=(PTBR-1024)/8;
+
+if([PAGE_TABLE+current*8+2*vpagenum]==-1) then
+exception="exception";
+inline "JMP 11776";
+endif;
+
+counter=0;
+while(counter<64) do
+if([MEM_LIST+counter]==0) then
+break;
+endif;
+counter=counter+1;
+endwhile;
+
+if(counter<64) then
+[MEM_LIST+counter]=1;
+victimpage=counter;
+
+else
+
+counter=8*current+2*vpagenum;
+victimpage=[PAGE_TABLE+counter];
+
+while(1) do
+if([MEM_LIST+victimpage]==1 && [PAGE_TABLE+counter+1]=="01" ) then
+break;
+endif;
+if([MEM_LIST+victimpage]==1 && [PAGE_TABLE+counter+1]=="11" ) then
+[PAGE_TABLE+counter+1]="01";
+endif;
+
+if(counter==254) then
+counter=0;
+else
+counter=counter+2;
+if((counter+2)%8==0) then
+counter=counter+2;
+endif;
+endif;
+victimpage=[PAGE_TABLE+counter];
+endwhile;
+
+victimpage=[PAGE_TABLE+counter];
+
+alias counter1 S15;
+counter1=448;
+while(counter1<512) do
+if([DISK_LIST+counter1]==0) then
+break;
+endif;
+counter1=counter1+1;
+endwhile;
+
+if(counter1==512) then
+exception="exception";
+inline "JMP 11776";
+endif;
+
+store(victimpage,counter1);
+[DISK_LIST+counter1]=[DISK_LIST+counter1]+1;
+[PAGE_TABLE+counter]=counter1;
+[PAGE_TABLE+counter+1]="00";
+endif;
+
+if([PTBR+2*vpagenum]>=21 && [PTBR+2*vpagenum]<=447) then
+load(victimpage,[PTBR+2*vpagenum]);
+endif;
+
+if([PTBR+2*vpagenum]>=448 && [PTBR+2*vpagenum] <=511) then
+load(victimpage,[PTBR+2*vpagenum]);
+[DISK_LIST+[PTBR+2*vpagenum]]=[DISK_LIST+[PTBR+2*vpagenum]]-1;
+endif;
+
+[PTBR+2*vpagenum]=victimpage;
+[PTBR+2*vpagenum+1]="11";
+store(6,20);
+
+SP=SP+1;
+
+alias physical S14;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+
+[physical]=ip_addr;
+
+ireturn;
+
+endif;
