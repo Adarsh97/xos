@@ -1,0 +1,90 @@
+alias physical S0;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+
+alias syscallnumber S1;
+syscallnumber=[physical-1];
+
+alias sysindex S5;
+alias current S4;
+alias tempage S6;
+alias counter1 S11;
+if(syscallnumber==10) then
+
+alias counter S2;
+alias rpindex S3;
+rpindex=0;
+
+while (rpindex <64) do
+if([READY_LIST+rpindex*32+1]==1) then
+break;
+endif;
+rpindex=rpindex+1;
+endwhile;
+
+if(rpindex==64) then
+halt;
+endif;
+
+
+current =(PTBR-1024)/8;
+
+counter=15;
+while (counter<30) do
+if([READY_LIST+current*32+counter]!=-1) then
+sysindex=[READY_LIST+current*32+counter];
+[FILE_TABLE+sysindex*2+1]=[FILE_TABLE+sysindex*2+1]-1;
+if([FILE_TABLE+sysindex*2+1]<=0) then
+[FILE_TABLE+sysindex*2+1]=0;
+[FILE_TABLE+sysindex*2+0]=-1;
+endif;
+[READY_LIST+current*32+counter]=-1;
+[READY_LIST+current*32+counter+1]=-1;
+endif;
+counter=counter+2;
+endwhile;
+[READY_LIST+current*32+1]=0;
+
+counter=0;
+while(counter<4) do
+if([PTBR+2*counter]!=-1 && ([PTBR+2*counter+1]=="01" || [PTBR+counter*2+1]=="11")) then
+tempage=[PTBR+2*counter];
+[MEM_LIST+tempage]=[MEM_LIST+tempage]-1;
+if([MEM_LIST+tempage]==0) then
+counter1=0;
+while(counter1<512) do
+[tempage*512+counter1]="";
+counter1=counter1+1;
+endwhile;
+endif;
+endif;
+if([PTBR+2*counter]>=448 && ([PTBR+2*counter+1]=="10" || [PTBR+counter*2+1]=="00")) then
+tempage=[PTBR+2*counter];
+[DISK_LIST+tempage]=[DISK_LIST+tempage]-1;
+store(6,20);
+endif;
+[PTBR+2*counter]=-1;
+[PTBR+2*counter+1]="00";
+counter=counter+1;
+endwhile;
+
+BP=[READY_LIST+rpindex*32+2];
+SP=[READY_LIST+rpindex*32+3];
+PTBR=[READY_LIST+rpindex*32+5];
+PTLR=[READY_LIST+rpindex*32+6];
+R0=[READY_LIST+rpindex*32+7];
+R1=[READY_LIST+rpindex*32+8];
+R2=[READY_LIST+rpindex*32+9];
+R3=[READY_LIST+rpindex*32+10];
+R4=[READY_LIST+rpindex*32+11];
+R5=[READY_LIST+rpindex*32+12];
+R6=[READY_LIST+rpindex*32+13];
+R7=[READY_LIST+rpindex*32+14];
+
+SP=SP+1;
+alias newphysical S12;
+newphysical=([PTBR+2*(SP/512)]*512)+(SP%512);
+[newphysical]=[READY_LIST+rpindex*32+4];
+
+[READY_LIST+rpindex*32+1]=2;
+ireturn;
+endif;
