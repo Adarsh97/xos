@@ -1,0 +1,138 @@
+
+
+// ex_handler loading
+
+load (7,1);  
+load (8,2);
+ // interrupt 7 loading
+load (23,17); 
+load (24,18);
+
+ // pid of init =0
+[READY_LIST+0]=0; 
+
+ // loading init
+load(25,21);  
+load(26,22);
+load(27,23);
+
+// page table base register
+PTBR=1024;  
+ // page table length register 
+PTLR=4;     
+
+// page table entry setting
+[PTBR+0]=21;  
+[PTBR+1]="00";
+[PTBR+2]=22;
+[PTBR+3]="00";
+[PTBR+4]=23;
+[PTBR+5]="00";
+[PTBR+6]=28;
+[PTBR+7]="01";
+
+ // init is running
+[READY_LIST+1]=2; 
+// 4th page containing stack
+SP=3*512;         
+
+// top of the stack contain  address of (logical) init
+[28*512]=0;       
+           
+
+ // FAT entry loading
+load (5,19); 
+// Disk Free List loading 
+load (6,20);
+// interrupt 1 loading    
+load (11,5);   
+load (12,6);
+// loading timer interrupt
+load(9,3);     
+load(10,4);
+
+//System Wide Open file table
+
+alias counter S0;
+counter=0;
+while (counter <128 ) do
+//FAT index
+ [FILE_TABLE +counter+0]=-1; 
+// file open count
+ [FILE_TABLE +counter+1]=0;   
+ counter=counter+2;
+endwhile;
+
+// Per process page table 
+
+alias updater S1;
+updater=15;
+
+while (updater<31) do
+ [READY_LIST+updater+0]=-1;
+ [READY_LIST+updater+1]=-1;
+ updater=updater+2;
+endwhile;
+
+// interrupt 2 loading
+load(13,7);    
+load(14,8);
+
+// interrupt 3 loading
+load(15,9);    
+load(16,10);
+
+ // interrupt 4 loading
+load(17,11);  
+load(18,12);
+
+// interrupt 5 loading
+
+load(19,13);
+load(20,14);
+
+//load interrupt 6
+
+load(21,15);
+load(22,16);
+
+//load interrupt 7
+
+load(23,17);
+load(24,18);
+
+// mem list make used for first 28 entries and  others unused. 
+
+counter=0;
+
+while (counter<=28) do
+[MEM_LIST+counter]=1;
+counter=counter+1;
+endwhile;
+
+while(counter<64) do
+[MEM_LIST+counter]=0;
+counter=counter+1;
+endwhile;
+
+[MEM_LIST+25]=0;
+[MEM_LIST+26]=0;
+[MEM_LIST+27]=0;
+
+
+//PCB of except init unused.
+
+counter=1;
+
+while (counter<32) do
+[READY_LIST+32*counter+1]=0;
+counter=counter+1;
+endwhile;
+
+counter=448;
+while(counter<512) do
+[DISK_LIST+counter]=0;
+counter=counter+1;
+endwhile;
+
+ireturn ;
