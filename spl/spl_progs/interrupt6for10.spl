@@ -33,6 +33,9 @@ alias codeblock S5;
 codeblock=0;
 
 while (counter<256 )do
+ if([SCRATCHPAD+counter]==-1) then
+ break;
+ endif;
  if([SCRATCHPAD+counter]!=-1) then
  codeblock=codeblock+1;
  endif;
