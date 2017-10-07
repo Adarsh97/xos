@@ -1,0 +1,157 @@
+alias physical S0;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+alias syscallnumber S1;
+syscallnumber=[physical-1];
+alias counter S13;
+if(syscallnumber==8) then
+
+alias current S11;
+current=(PTBR-1024)/8;
+
+alias pcbindex S2;
+pcbindex=0;
+
+// finding free block in readylist.
+
+while(pcbindex<32) do
+if([READY_LIST+pcbindex*32+1]==0) then
+break;
+endif;
+pcbindex=pcbindex+1;
+endwhile;
+
+
+if(pcbindex==32) then
+[physical-2]=-1;
+ireturn ;
+endif;
+
+// setting pid of child process.
+
+[READY_LIST+pcbindex*32+0]=pcbindex;
+[READY_LIST+pcbindex*32+31]=(PTBR-1024)/8;
+
+//---------------------------
+
+counter=0;
+
+while (counter<64) do
+if([MEM_LIST+counter]==0) then
+break;
+endif;
+counter=counter+1;
+endwhile;
+
+if(counter==64) then
+[physical-2]=-1;
+ireturn;
+endif;
+
+alias childspage S15;
+childspage=counter;
+
+[MEM_LIST+counter]=1;
+
+alias parentspage S14;
+parentspage=[PTBR+2*3];
+counter=0;
+while(counter<512) do
+[childspage*512+counter]=[parentspage*512+counter];
+counter=counter+1;
+endwhile;
+
+alias childPTBR S13;
+childPTBR=PAGE_TABLE+pcbindex*8;
+
+[childPTBR+2*3]=childspage;
+[childPTBR+2*3+1]="01";
+
+
+//-----------------------------
+alias pagecount S3;
+alias counter S4;
+counter=0;
+pagecount=0;
+
+
+// copying the page table of child process.
+
+counter=0;
+
+alias counter1 S6;
+alias counter2 S7;
+counter1=0;
+counter2=0;
+alias tempage S8;
+
+
+while(counter<3) do
+[childPTBR+2*counter]=[PTBR+counter*2];
+[childPTBR+2*counter+1]=[PTBR+counter*2+1];
+if([childPTBR+2*counter]!=-1 && ([childPTBR+2*counter+1]=="01" || [childPTBR+2*counter+1]=="11")) then
+tempage=[PTBR+2*counter];
+[MEM_LIST+tempage]=[MEM_LIST+tempage]+1;
+endif;
+if ([PTBR+2*counter]>=448 && ([PTBR+counter*2+1]=="10" || [PTBR+2*counter+1]=="00")) then
+tempage=[PTBR+2*counter];
+[DISK_LIST+tempage]=[DISK_LIST+tempage]+1;
+store(6,20);
+endif;
+counter=counter+1;
+endwhile;
+
+
+
+
+
+
+// setting PTBR.
+
+[READY_LIST+32*pcbindex+5]=PAGE_TABLE+8*pcbindex;
+ 
+
+[READY_LIST+32*pcbindex+2]=BP;
+[READY_LIST+32*pcbindex+3]=SP-1;
+[READY_LIST+32*pcbindex+4]=[physical];
+[READY_LIST+32*pcbindex+6]=PTLR;
+[READY_LIST+32*pcbindex+7]=R0;
+[READY_LIST+32*pcbindex+8]=R1;
+[READY_LIST+32*pcbindex+9]=R2;
+[READY_LIST+32*pcbindex+10]=R3;
+[READY_LIST+32*pcbindex+11]=R4;
+[READY_LIST+32*pcbindex+12]=R5;
+[READY_LIST+32*pcbindex+13]=R6;
+[READY_LIST+32*pcbindex+14]=R7;
+
+alias currentpcb S7;
+currentpcb=(PTBR-1024)/8;
+
+alias child S8;
+alias parent S9;
+child=READY_LIST+32*pcbindex;
+parent=READY_LIST+32*currentpcb;
+
+alias sysindex S10;
+counter=15;
+
+while (counter<=30) do
+ [child+counter]=[parent+counter];
+ [child+counter+1]=[parent+counter+1];
+if([child+counter]!=-1) then
+sysindex=[child+counter];
+[FILE_TABLE+2*sysindex+1]=[FILE_TABLE+2*sysindex+1]+1;
+endif;
+counter=counter+2;
+endwhile;
+
+[child+1]=1;
+[physical-2]=pcbindex;
+
+alias physicalchild S11;
+
+physicalchild=([PAGE_TABLE+8*pcbindex+2*((SP-1)/512)]*512+((SP-1)%512));
+[physicalchild-1]=-2;
+ireturn ;
+
+endif;
+
