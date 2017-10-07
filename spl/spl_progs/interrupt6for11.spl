@@ -1,0 +1,126 @@
+alias physical S0;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+
+alias syscallnumber S1;
+syscallnumber=[physical-1];
+alias tempage S9;
+
+if(syscallnumber==9) then
+
+alias filename S2;
+filename=[physical-3];
+
+alias  fatindex S3;
+fatindex=0;
+
+while (fatindex<64) do
+if([FAT+fatindex*8]==filename) then
+break;
+endif;
+fatindex=fatindex+1;
+endwhile;
+
+if (fatindex==64) then
+[physical-2]=-1;
+ireturn;
+endif;
+
+
+
+alias counter S4;
+counter=0;
+alias codeblock S5;
+codeblock=0;
+
+codeblock=[FAT+fatindex*8+1];
+codeblock=codeblock/512;
+
+
+if (codeblock >3 ) then
+[physical-2]=-1;
+ireturn;
+endif;
+
+alias current S6;
+current =(PTBR-1024)/8;
+
+alias codepage S7;
+codepage=0;
+
+counter=0;
+
+while(counter<3) do
+if([PTBR+counter*2+1]=="01" || [PTBR+counter*2+1]=="11") then
+[MEM_LIST+[PTBR+2*counter]]=[MEM_LIST+[PTBR+2*counter]]-1;
+endif;
+if(([PTBR+2*counter+1]=="00" || [PTBR+2*counter+1]=="10") && [PTBR+2*counter]>447) then
+[DISK_LIST+[PTBR+counter*2]]=[DISK_LIST+[PTBR+counter*2]]-1;
+endif;
+counter=counter+1;
+endwhile;
+
+
+
+load(1,[FAT+fatindex*8+2]);
+counter=0;
+while(counter<codeblock) do
+[PTBR+2*counter]=[SCRATCHPAD+counter];
+[PTBR+2*counter+1]="00";
+counter=counter+1;
+endwhile;
+
+while(counter<3) do
+[PTBR+2*counter]=-1;
+[PTBR+2*counter+1]="00";
+counter=counter+1;
+endwhile;
+
+[PTBR+7]="01";
+
+
+counter=15;
+alias sysindex S10;
+
+
+while (counter<=30) do
+if([READY_LIST+current*32+counter]!=-1) then
+sysindex=[READY_LIST+current*32+counter];
+[FILE_TABLE+sysindex*2+1]=[FILE_TABLE+sysindex*2+1]-1;
+if([FILE_TABLE+sysindex*2+1]<=0) then
+[FILE_TABLE+sysindex*2+1]=0;
+[FILE_TABLE+sysindex*2+0]=-1;
+endif;
+[READY_LIST+current*32+counter]=-1;
+[READY_LIST+current*32+counter+1]=-1;
+endif;
+counter=counter+2;
+endwhile;
+
+SP=3*512;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+[physical]=0;
+ireturn;
+endif;
+
+if(syscallnumber==11) then
+alias current S2;
+current=(PTBR-1024)/8;
+
+[physical-2]=current;
+
+ireturn ;
+endif;
+
+if(syscallnumber==12) then
+alias current S2;
+current=(PTBR-1024)/8;
+if([READY_LIST+current*32+31]>=0 && [READY_LIST+current*32+31]<=31) then
+[physical-2]=[READY_LIST+current*32+31];
+else
+[physical-2]=-1;
+endif;
+ireturn ;
+endif;
+
+  
+
