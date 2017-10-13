@@ -1,0 +1,175 @@
+alias physical S0;
+physical=([PTBR+2*(SP/512)]*512)+(SP%512);
+
+alias syscallnumber S1;
+syscallnumber=[physical-1];
+
+alias sysindex S5;
+alias current S4;
+alias tempage S6;
+alias counter1 S11;
+alias counter S12;
+alias rpindex S13;
+current=(PTBR-1024)/8;
+alias simplify S8 ;
+
+
+if(syscallnumber==14) then
+
+counter=0;
+while(counter<32) do
+simplify=READY_LIST+counter*32+1;
+if([simplify]==(100+current)) then
+[simplify]=1;
+endif;
+counter=counter+1;
+endwhile;
+
+
+
+[physical-2]=0;
+ireturn ;
+endif;
+
+
+if(syscallnumber == 10) then
+
+
+counter=0;
+while(counter<32) do
+simplify=READY_LIST+counter*32+1;
+if([simplify]==(100+current)) then
+[simplify]=1;
+endif;
+counter=counter+1;
+endwhile;
+
+
+rpindex=0;
+
+while (rpindex<32) do
+if([READY_LIST+32*rpindex+1]==1) then
+break;
+endif;
+rpindex=rpindex+1;
+endwhile;
+
+if(rpindex==32) then
+halt;
+endif;
+
+counter=15;
+while (counter<=30) do
+simplify=READY_LIST+current*32+counter;
+if([simplify]!=-1) then
+sysindex=[simplify];
+[FILE_TABLE+sysindex*2+1]=[FILE_TABLE+sysindex*2+1]-1;
+if([FILE_TABLE+sysindex*2+1]<=0) then
+// [FILE_TABLE+sysindex*2+1]=0;
+[FILE_TABLE+sysindex*2+0]=-1;
+endif;
+[simplify]=-1;
+[simplify+1]=-1;
+endif;
+counter=counter+2;
+endwhile;
+
+[READY_LIST+current*32+1]=0;
+
+counter=0;
+while(counter < PTLR) do
+if(([PTBR+2*counter+1]=="01") || ([PTBR+2*counter+1]=="11")) then
+tempage=[PTBR+2*counter];
+[MEM_LIST+tempage]=[MEM_LIST+tempage]-1;
+else
+if([PTBR+2*counter]>=448 ) then
+tempage=[PTBR+2*counter];
+[DISK_LIST+tempage]=[DISK_LIST+tempage]-1;
+store(6,20);
+endif;
+endif;
+[PTBR+2*counter]=-1;
+[PTBR+2*counter+1]="00";
+counter=counter+1;
+endwhile;
+
+endif;
+
+
+if(syscallnumber==13) then
+current=(PTBR-1024)/8;
+alias waitingpid S4;
+waitingpid=[physical-3];
+
+if ( (waitingpid <0) || (waitingpid >=32) ) then
+[physical-2]=-1;
+ireturn;
+endif;
+
+if( (waitingpid==current) || ( [READY_LIST+waitingpid*32+1] == 0) ) then
+[physical-2]=-1;
+ireturn;
+endif;
+
+simplify=READY_LIST+current*32;
+
+[simplify+1]=100+waitingpid;
+
+[simplify+2]=BP;
+[simplify+3]=SP-1;
+[simplify+4]=[physical];
+[simplify+5]=PTBR;
+[simplify+6]=PTLR;
+[simplify+7]=R0;
+[simplify+8]=R1;
+[simplify+9]=R2;
+[simplify+10]=R3;
+[simplify+11]=R4;
+[simplify+12]=R5;
+[simplify+13]=R6;
+[simplify+14]=R7;
+
+[physical-2]=0;
+
+endif;
+
+
+if((syscallnumber==10) || (syscallnumber==13)) then
+
+rpindex=current+1;
+while (1) do
+if(rpindex==32) then
+rpindex=0;
+endif;
+if([READY_LIST+rpindex*32+1]==1) then
+break;
+endif;
+rpindex=rpindex+1;
+endwhile;
+
+simplify=READY_LIST+rpindex*32;
+
+
+
+BP=[simplify+2];
+SP=[simplify+3];
+PTBR=[simplify+5];
+PTLR=[simplify+6];
+R0=[simplify+7];
+R1=[simplify+8];
+R2=[simplify+9];
+R3=[simplify+10];
+R4=[simplify+11];
+R5=[simplify+12];
+R6=[simplify+13];
+R7=[simplify+14];
+
+
+SP=SP+1;
+alias newphysical S7;
+newphysical=([PTBR+2*(SP/512)]*512)+(SP%512);
+[newphysical]=[READY_LIST+rpindex*32+4];
+[READY_LIST+rpindex*32+1]=2;
+
+ireturn;
+endif;
