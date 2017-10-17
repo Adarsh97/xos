@@ -11,13 +11,13 @@ alias counter1 S11;
 alias counter S12;
 alias rpindex S13;
 current=(PTBR-1024)/8;
-
+alias newly  S9;
 if(syscallnumber==10 || syscallnumber==14) then
 
 
 counter=0;
 while(counter<32) do
-if([READY_LIST+counter*32+1]==100+current) then
+if([READY_LIST+counter*32+1]==(100+current)) then
 [READY_LIST+counter*32+1]=1;
 endif;
 counter=counter+1;
@@ -90,30 +90,32 @@ endif;
 
 if(syscallnumber==13) then
 
-alias waitingpid S4;
+alias waitingpid S14;
 waitingpid=[physical-3];
 
-if(waitingpid==current ||  [READY_LIST+waitingpid*32+1]==0 || waitingpid <0 || waitingpid >=32 ) then
+if((waitingpid==current) ||  ([READY_LIST+waitingpid*32+1]==0) || (waitingpid <0) || (waitingpid >=32) ) then
 [physical-2]=-1;
 ireturn;
 endif;
 
 
-[READY_LIST+current*32+1]=100+waitingpid;
+newly=READY_LIST+current*32;
 
-[READY_LIST+current*32+2]=BP;
-[READY_LIST+current*32+3]=SP-1;
-[READY_LIST+current*32+4]=[physical];
-[READY_LIST+current*32+5]=PTBR;
-[READY_LIST+current*32+6]=PTLR;
-[READY_LIST+current*32+7]=R0;
-[READY_LIST+current*32+8]=R1;
-[READY_LIST+current*32+9]=R2;
-[READY_LIST+current*32+10]=R3;
-[READY_LIST+current*32+11]=R4;
-[READY_LIST+current*32+12]=R5;
-[READY_LIST+current*32+13]=R6;
-[READY_LIST+current*32+14]=R7;
+[newly+1]=100+waitingpid;
+
+[newly+2]=BP;
+[newly+3]=SP-1;
+[newly+4]=[physical];
+[newly+5]=PTBR;
+[newly+6]=PTLR;
+[newly+7]=R0;
+[newly+8]=R1;
+[newly+9]=R2;
+[newly+10]=R3;
+[newly+11]=R4;
+[newly+12]=R5;
+[newly+13]=R6;
+[newly+14]=R7;
 
 endif;
 
@@ -121,25 +123,29 @@ endif;
 if(syscallnumber==10 || syscallnumber==13) then
 
 
-BP=[READY_LIST+rpindex*32+2];
-SP=[READY_LIST+rpindex*32+3];
-PTBR=[READY_LIST+rpindex*32+5];
-PTLR=[READY_LIST+rpindex*32+6];
-R0=[READY_LIST+rpindex*32+7];
-R1=[READY_LIST+rpindex*32+8];
-R2=[READY_LIST+rpindex*32+9];
-R3=[READY_LIST+rpindex*32+10];
-R4=[READY_LIST+rpindex*32+11];
-R5=[READY_LIST+rpindex*32+12];
-R6=[READY_LIST+rpindex*32+13];
-R7=[READY_LIST+rpindex*32+14];
+newly=READY_LIST+rpindex*32;
+
+BP=[newly+2];
+SP=[newly+3];
+PTBR=[newly+5];
+PTLR=[newly+6];
+R0=[newly+7];
+R1=[newly+8];
+R2=[newly+9];
+R3=[newly+10];
+R4=[newly+11];
+R5=[newly+12];
+R6=[newly+13];
+R7=[newly+14];
+
+[physical-2]=0; 
 
 SP=SP+1;
 alias newphysical S7;
 newphysical=([PTBR+2*(SP/512)]*512)+(SP%512);
 [newphysical]=[READY_LIST+rpindex*32+4];
 [READY_LIST+rpindex*32+1]=2;
-[physical-2]=0;
+
 ireturn;
 endif;
 
