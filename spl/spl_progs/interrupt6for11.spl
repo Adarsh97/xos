@@ -117,6 +117,7 @@ current=(PTBR-1024)/8;
 if([READY_LIST+current*32+31]>=0 && [READY_LIST+current*32+31]<=31) then
 [physical-2]=[READY_LIST+current*32+31];
 else
+
 [physical-2]=-1;
 endif;
 ireturn ;
