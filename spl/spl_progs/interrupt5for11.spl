@@ -3,6 +3,7 @@ physical=([PTBR+2*(SP/512)]*512)+(SP%512);
 alias syscallnumber S1;
 syscallnumber=[physical-1];
 alias counter S13;
+
 if(syscallnumber==8) then
 
 alias current S11;
@@ -33,7 +34,7 @@ endif;
 
 //---------------------------
 
-counter=0;
+counter=25;
 
 while (counter<64) do
 if([MEM_LIST+counter]==0) then
@@ -149,7 +150,7 @@ endwhile;
 
 alias physicalchild S11;
 
-physicalchild=([PAGE_TABLE+8*pcbindex+2*((SP-1)/512)]*512+((SP-1)%512));
+physicalchild=[PAGE_TABLE+8*pcbindex+2*((SP-1)/512)]*512+((SP-1)%512);
 [physicalchild-1]=-2;
 ireturn ;
 
